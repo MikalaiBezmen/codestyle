@@ -5,29 +5,32 @@
 
 <module name="Checker">
 
-    <property name="fileExtensions"
-              value="java, properties, xml"/>
+    <property name="fileExtensions" value="java, properties, xml"/>
+    <property name="charset" value="UTF-8"/>
 
-    <!-- Checks whether files end with a new line. -->
-    <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
+    <!-- Checks that there are no tab characters in the file -->
+    <module name="FileTabCharacter">
+        <property name="severity" value="error"/>
+    </module>
+
+    <module name="FileLength">
+        <property name="severity" value="warning"/>
+        <property name="max" value="1000"/>
+    </module>
+
     <module name="NewlineAtEndOfFile">
         <property name="lineSeparator" value="lf_cr_crlf"/>
+    </module>
+
+    <!-- Checks that TODOs are named with some basic formatting. Checks for the following pattern  TODO: {-->
+    <module name="RegexpSingleline">
+        <property name="format" value="((//.*)|(\*.*))TODO[^: {]"/>
+        <property name="message" value='All TODOs should be named.  e.g. "TODO: {addressed author name} description"'/>
     </module>
 
     <!-- Checks that property files contain the same keys. -->
     <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
     <module name="Translation"/>
-
-    <!-- Checks for Size Violations. -->
-    <!-- See http://checkstyle.sf.net/config_sizes.html -->
-    <module name="FileLength">
-        <property name="severity" value="error"/>
-        <property name="max" value="1000"/>
-    </module>
-
-    <!-- Checks for whitespace -->
-    <!-- See http://checkstyle.sf.net/config_whitespace.html -->
-    <module name="FileTabCharacter"/>
 
     <!-- Miscellaneous other checks. -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
@@ -47,13 +50,19 @@
     <!-- </module> -->
 
     <module name="TreeWalker">
-	
+
         <!-- Checks for Javadoc comments. -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <module name="JavadocMethod">
             <property name="excludeScope" value="private"/>
             <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
+            <property name="allowMissingThrowsTags" value="true"/>
+            <property name="allowThrowsTagsForSubclasses" value="true"/>
+            <property name="allowUndeclaredRTE" value="true"/>
         </module>
+
         <module name="JavadocType"/>
         <module name="JavadocVariable">
             <property name="excludeScope" value="private"/>
@@ -72,11 +81,28 @@
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
-        <!-- Checks for imports -->
-        <!-- See http://checkstyle.sf.net/config_import.html -->
-        <module name="AvoidStarImport"/>
+        <module name="AvoidStarImport">
+            <property name="allowClassImports" value="false"/>
+            <property name="severity" value="error"/>
+        </module>
+
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
-        <module name="RedundantImport"/>
+
+        <!-- Checks for redundant import statements. -->
+        <module name="RedundantImport">
+            <property name="severity" value="error"/>
+        </module>
+
+        <module name="ImportOrder">
+            <!-- Checks for out of order import statements. -->
+            <property name="severity" value="error"/>
+            <property name="ordered" value="true"/>
+            <property name="groups" value="/([^j]|.[^a]|..[^v]|...[^a])/,/^javax?\./"/>
+            <!-- This ensures that static imports go to the end. -->
+            <property name="option" value="bottom"/>
+            <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
+        </module>
+
         <module name="UnusedImports">
             <property name="processJavadoc" value="false"/>
         </module>
@@ -89,26 +115,137 @@
             <property name="max" value="120"/>
         </module>
         <module name="MethodLength">
-            <property name="severity" value="error"/>
-            <property name="max" value="20"/>
+            <property name="severity" value="warning"/>
+            <property name="max" value="15"/>
         </module>
         <module name="ParameterNumber"/>
+
+        <!-- Validates static, final fields against the expression "^[A-Z][a-zA-Z0-9]*$". -->
+        <module name="TypeNameCheck">
+            <metadata name="altname" value="TypeName"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates non-private, static, final fields against the supplied
+        public/package final fields "^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$". -->
+        <module name="ConstantNameCheck">
+            <metadata name="altname" value="ConstantName"/>
+            <property name="applyToPublic" value="true"/>
+            <property name="applyToProtected" value="true"/>
+            <property name="applyToPackage" value="true"/>
+            <property name="applyToPrivate" value="false"/>
+            <property name="format" value="^([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|FLAG_.*)$"/>
+            <message key="name.invalidPattern"
+                     value="Variable ''{0}'' should be in ALL_CAPS (if it is a constant) or be private (otherwise)."/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates static, non-final fields against the supplied
+        expression "^[a-z][a-zA-Z0-9]*_?$". -->
+        <module name="StaticVariableNameCheck">
+            <metadata name="altname" value="StaticVariableName"/>
+            <property name="applyToPublic" value="true"/>
+            <property name="applyToProtected" value="true"/>
+            <property name="applyToPackage" value="true"/>
+            <property name="applyToPrivate" value="true"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*_?$"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates non-static members against the supplied expression. -->
+        <module name="MemberNameCheck">
+            <metadata name="altname" value="MemberName"/>
+            <property name="applyToPublic" value="true"/>
+            <property name="applyToProtected" value="true"/>
+            <property name="applyToPackage" value="true"/>
+            <property name="applyToPrivate" value="true"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates identifiers for method names. -->
+        <module name="MethodNameCheck">
+            <metadata name="altname" value="MethodName"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)*$"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates identifiers for method parameters against the
+          expression "^[a-z][a-zA-Z0-9]*$". -->
+        <module name="ParameterName">
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates identifiers for local final variables against the
+          expression "^[a-z][a-zA-Z0-9]*$". -->
+        <module name="LocalFinalVariableName">
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Validates identifiers for local variables against the
+          expression "^[a-z][a-zA-Z0-9]*$". -->
+        <module name="LocalVariableName">
+            <property name="severity" value="error"/>
+        </module>
 
         <!-- Checks for whitespace -->
         <!-- See http://checkstyle.sf.net/config_whitespace.html -->
         <module name="EmptyForIteratorPad"/>
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
-        <module name="NoWhitespaceAfter"/>
-        <module name="NoWhitespaceBefore"/>
-        <module name="OperatorWrap"/>
-        <module name="ParenPad"/>
-        <module name="TypecastParenPad"/>
-        <module name="WhitespaceAfter"/>
-        <module name="WhitespaceAround"/>
 
-        <!-- Modifier Checks -->
-        <!-- See http://checkstyle.sf.net/config_modifiers.html -->
+        <!-- Checks that there is no whitespace after various unary operators. Linebreaks are allowed. -->
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS"/>
+            <property name="allowLineBreaks" value="true"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Checks that there is no whitespace before various unary operators. Linebreaks are allowed. -->
+        <module name="NoWhitespaceBefore">
+            <property name="tokens" value="SEMI, DOT, POST_DEC, POST_INC"/>
+            <property name="allowLineBreaks" value="true"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <module name="OperatorWrap"/>
+
+        <!-- Checks that there is no whitespace before close parens or after open parens. -->
+        <module name="ParenPad">
+            <property name="severity" value="error"/>
+        </module>
+
+        <module name="TypecastParenPad"/>
+
+        <!-- Checks that commas, semicolons and typecasts are followed by whitespace. -->
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="COMMA, SEMI, TYPECAST"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Checks that various tokens are surrounded by whitespace.
+             This includes most binary operators and keywords followed
+             by regular or curly braces.
+          -->
+        <module name="WhitespaceAround">
+            <property name="tokens"
+                      value="ASSIGN, BAND, BAND_ASSIGN, BOR,
+        BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN,
+        EQUAL, GE, GT, LAND, LCURLY, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE,
+        LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN,
+        LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS,
+        MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION,
+        SL, SLIST, SL_ASSIGN, SR_ASSIGN, STAR, STAR_ASSIGN"/>
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Warn if modifier order is inconsistent with JLS3 8.1.1, 8.3.1, and
+             8.4.3.  The prescribed order is:
+             public, protected, private, abstract, static, final, transient, volatile,
+             synchronized, native, strictfp
+          -->
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
 
@@ -116,9 +253,38 @@
         <!-- See http://checkstyle.sf.net/config_blocks.html -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
-        <module name="LeftCurly"/>
-        <module name="NeedBraces"/>
-        <module name="RightCurly"/>
+
+        <!-- Checks for placement of the left curly brace ('{'). -->
+        <module name="LeftCurly">
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- Checks for braces around if and else blocks -->
+        <module name="NeedBraces">
+            <property name="severity" value="error"/>
+            <property name="tokens" value="LITERAL_IF, LITERAL_ELSE, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO"/>
+        </module>
+
+        <module name="RightCurly">
+            <!-- Checks right curlies on CATCH, ELSE, and TRY blocks are on
+            the same line. e.g., the following example is fine:
+            <pre>
+              if {
+                ...
+              } else
+            </pre>
+            -->
+            <!-- This next example is not fine:
+            <pre>
+              if {
+                ...
+              }
+              else
+            </pre>
+            -->
+            <property name="option" value="same"/>
+            <property name="severity" value="error"/>
+        </module>
 
         <!-- Checks for common coding problems -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
@@ -137,17 +303,43 @@
         <!-- See http://checkstyle.sf.net/config_design.html -->
         <!-- <module name="DesignForExtension" /> -->
         <module name="FinalClass"/>
-        <module name="HideUtilityClassConstructor">
-
-        </module>
+        <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
         <module name="VisibilityModifier"/>
 
         <!-- Miscellaneous other checks. -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
-        <module name="FinalParameters"/>
-        <module name="TodoComment"/>
-        <module name="UpperEll"/>
+        <!--<module name="FinalParameters"/>-->
+        <module name="TodoComment">
+            <property name="severity" value="warning"/>
+            <property name="format" value="(TODO)|(FIXME)"/>
+        </module>
+
+        <!-- Checks that long constants are defined with an upper ell.-->
+        <module name="UpperEll">
+            <property name="severity" value="error"/>
+        </module>
+
+        <!-- No System.out -->
+        <module name="Regexp">
+            <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+
+        <!-- No System.err -->
+        <!-- . matches any character, so we need to escape it and use \. to match dots. -->
+        <module name="Regexp">
+            <property name="format" value="System\.err\.println"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+
+        <!-- No printStackTrace -->
+        <module name="Regexp">
+            <!-- . matches any character, so we need to escape it and use \. to match dots. -->
+            <property name="format" value="e\.printStackTrace\(\)"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+
     </module>
 </module>
